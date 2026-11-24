@@ -89,7 +89,7 @@ export function SettingsPage() {
         <p className="sub" style={{ marginTop: 10 }}>TAW uses <code>/api/sendText</code> and <code>/api/sendLocation</code>. Customer location messages arrive as <code>message</code> webhooks; Dispatch can also paste the payload directly.</p>
       </Card>
 
-      <Card title="Developer-portal licence" subtitle="Verified against the RAVBsoft master licence RPC">
+      <Card title="Developer-portal licence" subtitle="TAW product line · verified through poll_taw_license on the RAVBsoft master project">
         <div className="form-grid">
           <Field label="Licence key" full><input className="input mono" value={licenceKey} onChange={(e) => setLicenceKey(e.target.value.toUpperCase())} placeholder="TAW-XXXX-XXXX-XXXX" /></Field>
         </div>

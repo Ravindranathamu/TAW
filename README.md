@@ -78,7 +78,7 @@ See [docs/GOLDEN_MASTER.md](docs/GOLDEN_MASTER.md) for the full procedure and up
 
 ## Licensing and deployment
 
-TAW is deployed through the same portal model as the other RAVBsoft products. The developer portal issues licence keys and manages releases; this app verifies a key through the `poll_workshop_license` RPC and never provisions Supabase itself. Portal admins use `app_metadata.role = "ravsoft_admin"`.
+TAW is deployed through the same portal model as the other RAVBsoft products. The developer portal issues TAW licence keys, manages TAW releases and queues deployments; this app verifies a key through the `poll_taw_license` RPC and never provisions Supabase itself. Portal admins use `app_metadata.role = "ravsoft_admin"`.
 
 See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 

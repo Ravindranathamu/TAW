@@ -56,7 +56,19 @@ Then set each company user's `app_metadata.company_id`. Admin users need `app_me
 
 ## Licence verification
 
-`poll_workshop_license(p_license_key text)` returns a JSON object with `valid`, `plan`, `status`, `expires_at`, `seats` and `message`. The app calls it from Settings. Insert active licence rows into `taw_licences` from the **portal admin** side only; they are never part of the golden master.
+`poll_taw_license(p_license_key text)` returns a JSON object with `valid`, `product`, `plan`, `status`, `expires_at`, `seats` and `message`. The app calls it from Settings. It accepts only keys whose `product` is `TAW`; Torque ERP/ScanPlan keys are rejected. Insert active licence rows into `taw_licences` from the **portal admin** side only; they are never part of the golden master.
+
+The master RAVBsoft developer portal also exposes the same `poll_taw_license` RPC against `developer_license_keys` where `product = 'TAW'`. Set `VITE_MASTER_LICENSE_URL` to the master portal project when TAW is managed centrally.
+
+## Portal-managed deployment
+
+The developer portal now treats TAW as its own product line:
+
+- Register the carrier as software `TAW` with a `TAW-LK-XXXXXXXX` installation ID.
+- Issue the licence from **Fleet → TAW licence keys**; the generated `TAW-YYYYMMDD-XXXXXXXX` key is stored in the master licence registry and accepted only by `poll_taw_license`.
+- TAW has an independent release train (`0.1.0` in the golden master), so a Torque ERP deploy never changes a TAW installation.
+- The portal's one-click Deploy action queues a product-scoped update run and posts the release payload to the client's deploy webhook. Set the webhook to a Cloudflare Pages/Netlify deploy hook for `taw-carrier`.
+- Client data is never included in the golden master; additive migrations preserve each carrier's own Supabase project.
 
 ## Post-deploy checks
 

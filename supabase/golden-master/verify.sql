@@ -46,7 +46,7 @@ select p.proname, p.prosecdef as security_definer
 from pg_proc p
 join pg_namespace n on n.oid = p.pronamespace
 where n.nspname = 'public'
-  and p.proname in ('taw_get_workspace','taw_save_workspace','taw_public_tracking','poll_workshop_license')
+  and p.proname in ('taw_get_workspace','taw_save_workspace','taw_public_tracking','poll_taw_license')
 order by p.proname;
 
 do $$
@@ -88,7 +88,7 @@ begin
   if (select count(*) from pg_proc p
       join pg_namespace n on n.oid = p.pronamespace
       where n.nspname = 'public'
-        and p.proname in ('taw_get_workspace','taw_save_workspace','taw_public_tracking','poll_workshop_license')
+        and p.proname in ('taw_get_workspace','taw_save_workspace','taw_public_tracking','poll_taw_license')
     ) <> 4 then
     bad := array_append(bad, 'rpcs-missing');
   end if;

@@ -355,6 +355,7 @@ create table if not exists public.taw_notifications (
 create table if not exists public.taw_licences (
   license_key text primary key,
   company_id text not null default '',
+  product text not null default 'TAW',
   plan text not null default '',
   status text not null default '',
   expires_at text not null default '',
@@ -759,8 +760,10 @@ $$;
 
 -- ---------------------------------------------------------------------------
 -- developer-portal licence poll (used by the app's Settings page)
+-- TAW uses its own RPC name so it cannot collide with the master portal's
+-- poll_workshop_license(p_installation_id) function for Torque ERP / ScanPlan.
 -- ---------------------------------------------------------------------------
-create or replace function public.poll_workshop_license(p_license_key text)
+create or replace function public.poll_taw_license(p_license_key text)
 returns jsonb
 language plpgsql
 security definer
@@ -772,31 +775,32 @@ begin
   select * into r
   from public.taw_licences
   where upper(license_key) = upper(coalesce(p_license_key, ''))
+    and upper(coalesce(product, 'TAW')) = 'TAW'
   limit 1;
 
   if not found then
     return jsonb_build_object(
-      'valid', false, 'plan', '', 'status', 'NOT_FOUND', 'expires_at', '',
+      'valid', false, 'product', 'TAW', 'plan', '', 'status', 'NOT_FOUND', 'expires_at', '',
       'seats', 0, 'message', 'Licence key was not found in the RAVBsoft portal.'
     );
   end if;
 
-  if not r.active or r.status <> 'ACTIVE' then
+  if not r.active or upper(r.status) <> 'ACTIVE' then
     return jsonb_build_object(
-      'valid', false, 'plan', r.plan, 'status', r.status, 'expires_at', r.expires_at,
+      'valid', false, 'product', 'TAW', 'plan', r.plan, 'status', r.status, 'expires_at', r.expires_at,
       'seats', r.seats, 'message', 'This licence is not active.'
     );
   end if;
 
   if r.expires_at <> '' and r.expires_at < now()::text then
     return jsonb_build_object(
-      'valid', false, 'plan', r.plan, 'status', 'EXPIRED', 'expires_at', r.expires_at,
+      'valid', false, 'product', 'TAW', 'plan', r.plan, 'status', 'EXPIRED', 'expires_at', r.expires_at,
       'seats', r.seats, 'message', 'This licence has expired.'
     );
   end if;
 
   return jsonb_build_object(
-    'valid', true, 'plan', r.plan, 'status', r.status, 'expires_at', r.expires_at,
+    'valid', true, 'product', 'TAW', 'plan', r.plan, 'status', upper(r.status), 'expires_at', r.expires_at,
     'seats', r.seats, 'message', 'TAW licence is active.'
   );
 end;
@@ -804,7 +808,7 @@ $$;
 
 grant execute on function public.taw_get_workspace() to authenticated;
 grant execute on function public.taw_save_workspace(jsonb) to authenticated;
-grant execute on function public.poll_workshop_license(text) to anon, authenticated;
+grant execute on function public.poll_taw_license(text) to anon, authenticated;
 grant select on public.taw_vehicle_catalog to anon, authenticated;
 grant select on public.taw_golden_manifest to anon, authenticated;
 

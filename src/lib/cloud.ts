@@ -103,6 +103,7 @@ export async function getPublicTracking(token: string): Promise<PublicTracking |
 
 export interface PortalLicence {
   valid: boolean;
+  product?: string;
   plan: string;
   status: string;
   expiresAt: string;
@@ -118,7 +119,7 @@ export async function checkPortalLicence(key: string): Promise<PortalLicence> {
   if (!url || !anon || !key.trim()) {
     return { valid: false, plan: "", status: "", expiresAt: "", seats: 0, message: "Licence key not configured." };
   }
-  const res = await fetch(`${url.replace(/\/+$/, "")}/rest/v1/rpc/poll_workshop_license`, {
+  const res = await fetch(`${url.replace(/\/+$/, "")}/rest/v1/rpc/poll_taw_license`, {
     method: "POST",
     headers: { "Content-Type": "application/json", apikey: anon, Authorization: `Bearer ${anon}` },
     body: JSON.stringify({ p_license_key: key.trim().toUpperCase() }),
@@ -127,21 +128,34 @@ export async function checkPortalLicence(key: string): Promise<PortalLicence> {
   if (!res.ok) {
     let message = text || `Licence check failed (${res.status}).`;
     try {
-      const parsed = JSON.parse(text) as { message?: string };
-      message = parsed.message || message;
+      const parsed = JSON.parse(text) as unknown;
+      const detail = (Array.isArray(parsed) ? parsed[0] : parsed) as
+        | { message?: string }
+        | undefined;
+      message = detail?.message || message;
     } catch {
       /* keep raw */
     }
     return { valid: false, plan: "", status: "", expiresAt: "", seats: 0, message };
   }
-  const data = JSON.parse(text) as Record<string, unknown>;
+  const parsed = JSON.parse(text) as unknown;
+  const data = (Array.isArray(parsed) ? parsed[0] : parsed) as Record<string, unknown> | undefined;
+  if (!data) {
+    return { valid: false, plan: "", status: "", expiresAt: "", seats: 0, message: "Licence RPC returned no data." };
+  }
+  const product = String(data.product ?? "TAW");
+  const valid = Boolean(data.valid ?? data.ok);
   return {
-    valid: Boolean(data.valid ?? data.ok),
+    valid: valid && product.toUpperCase() === "TAW",
+    product,
     plan: String(data.plan ?? ""),
     status: String(data.status ?? ""),
     expiresAt: String(data.expires_at ?? data.expiresAt ?? ""),
     seats: Number(data.seats ?? 0),
-    message: String(data.message ?? ""),
+    message:
+      product.toUpperCase() === "TAW"
+        ? String(data.message ?? "")
+        : `This key belongs to ${product}, not TAW.`,
   };
 }
 

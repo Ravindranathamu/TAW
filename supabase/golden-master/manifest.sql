@@ -16,7 +16,7 @@ create policy taw_public_read on public.taw_golden_file for select to anon, auth
 grant select on public.taw_golden_file to anon, authenticated;
 
 insert into public.taw_golden_file (path, sha256, purpose) values
-  ('supabase/migrations/20261124000100_taw_schema.sql', '4647FEA1A46897E8558D380891FCDDD1621CC2F806AF2E2E501A913191D934FD', 'Full clean TAW schema, RLS, public tracking and workspace/licence RPCs'),
+  ('supabase/migrations/20261124000100_taw_schema.sql', '167027A6B9DFF10A68126F6CC27DACC6A56E8B1327261F0E3EC810CA494E2488', 'Full clean TAW schema, RLS, public tracking and workspace/licence RPCs'),
   ('supabase/seed_vehicles_sl.sql', '7BDBA30C311CB62E88170EE0B67F6BA06D5582F36D275BD9023DD1BF8FFAFE73', '43-model Sri Lanka vehicle directory (reference data, not client data)'),
   ('supabase/golden-master/manifest.sql', 'MANAGED', 'This manifest'),
   ('supabase/golden-master/verify.sql', 'MANAGED', 'Zero-client-data verification'),

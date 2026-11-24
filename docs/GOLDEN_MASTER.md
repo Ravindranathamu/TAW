@@ -6,7 +6,7 @@ The golden master is a **clean template**, not a production database dump. It co
 
 | File | Role |
 | --- | --- |
-| `supabase/migrations/20261124000100_taw_schema.sql` | All TAW tables, RLS policies, `taw_get_workspace`, `taw_save_workspace`, `taw_public_tracking`, `poll_workshop_license` |
+| `supabase/migrations/20261124000100_taw_schema.sql` | All TAW tables, RLS policies, `taw_get_workspace`, `taw_save_workspace`, `taw_public_tracking`, `poll_taw_license` |
 | `supabase/seed_vehicles_sl.sql` | 43 Sri Lankan vehicle models used by dispatch auto-spec lookup |
 | `supabase/golden-master/manifest.sql` | Version, checksums and expected table list |
 | `supabase/golden-master/verify.sql` | Fails if any client table has rows |
@@ -30,7 +30,7 @@ Expected verification result:
 - `reference_catalog_rows = 43` → `PASS`.
 - `custom_catalog_rows = 0` → `PASS`.
 - RLS is enabled on every `taw_%` table except the two public manifest tables.
-- `taw_get_workspace`, `taw_save_workspace`, `taw_public_tracking` and `poll_workshop_license` exist as security-definer functions.
+- `taw_get_workspace`, `taw_save_workspace`, `taw_public_tracking` and `poll_taw_license` exist as security-definer functions.
 - `efficiency_kmpl` columns hold system-derived values only. No owner-entered km/L exists in the schema or UI.
 - Final notice: `TAW golden master verification PASSED — zero client data, 43 reference models.`
 
