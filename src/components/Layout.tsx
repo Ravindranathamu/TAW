@@ -50,6 +50,12 @@ export function Layout() {
   const urgent = state.notifications.filter((n) => n.severity === "URGENT").length;
   const portalUrl = getCloudConfig().portalUrl;
 
+  async function signOut() {
+    await leave();
+    notify({ tone: "info", text: "Signed out." });
+    navigate("/login", { replace: true });
+  }
+
   useEffect(() => {
     if ("serviceWorker" in navigator && import.meta.env.PROD) {
       void navigator.serviceWorker.register("/sw.js").catch(() => undefined);
@@ -72,6 +78,9 @@ export function Layout() {
             {urgent > 0 && <span className="notify-dot">{urgent}</span>}
           </button>
           <Badge tone="info" plain>Owner</Badge>
+          <button className="icon-btn" title="Sign out" aria-label="Sign out" onClick={() => void signOut()}>
+            <LogOut size={18} />
+          </button>
           <Avatar name={state.company.name} size="sm" />
         </div>
       </header>
@@ -117,7 +126,7 @@ export function Layout() {
           )}
           <button
             className="more-card"
-            onClick={() => void leave().then(() => notify({ tone: "info", text: "Signed out." }))}
+            onClick={() => void signOut()}
           >
             <span className="more-icon"><LogOut size={20} /></span>
             <span><strong>Sign out</strong><small>{mode === "demo" ? "Leave owner demo" : "Leave cloud"}</small></span>

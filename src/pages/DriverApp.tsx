@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   Camera,
   CheckCircle2,
@@ -28,6 +28,7 @@ const ACTIVE: TripStatus[] = ["HEADING_TO_PICKUP", "AT_PICKUP", "IN_TRANSIT"];
 
 export function DriverPage() {
   const { tripId } = useParams();
+  const navigate = useNavigate();
   const { state, updateGps, saveTrip, saveVehicle, notify, leave } = useTaw();
   const [selected, setSelected] = useState(tripId ?? state.trips.find((t) => ACTIVE.includes(t.status))?.id ?? "");
   const [gpsMode, setGpsMode] = useState<"native" | "browser" | "starting">("starting");
@@ -37,6 +38,12 @@ export function DriverPage() {
   const lastWahaSend = useRef(0);
   const device = machineId();
   const driver = state.staff.find((s) => s.id === trip?.staffId);
+
+  async function signOut() {
+    await leave();
+    notify({ tone: "info", text: "Signed out." });
+    navigate("/driver-login", { replace: true });
+  }
 
   useEffect(() => { if (tripId) setSelected(tripId); }, [tripId]);
   useEffect(() => { tripRef.current = trip; }, [trip]);
@@ -120,7 +127,7 @@ export function DriverPage() {
       <PageHead
         title="Driver workspace"
         subtitle={`Signed in as driver · device ${device}`}
-        action={<button className="btn btn-ghost btn-sm" onClick={() => void leave().then(() => notify({ tone: "info", text: "Signed out." }))}><LogOut size={13} /> Sign out</button>}
+        action={<button className="btn btn-ghost btn-sm" onClick={() => void signOut()}><LogOut size={13} /> Sign out</button>}
       />
 
       <Card title="My trips" subtitle="Open the assigned trip; live tracking starts automatically">
