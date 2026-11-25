@@ -9,26 +9,18 @@ export interface CloudConfig {
   licenseAnonKey: string;
 }
 
-const CONFIG_KEY = "taw_cloud_config_v1";
-
+/**
+ * Workspace values are injected by the deployment pipeline at build time.
+ * Owners never enter or edit them; demo mode simply runs without them.
+ */
 export function getCloudConfig(): CloudConfig {
-  let stored: Partial<CloudConfig> = {};
-  try {
-    stored = JSON.parse(localStorage.getItem(CONFIG_KEY) ?? "{}") as Partial<CloudConfig>;
-  } catch {
-    /* ignore */
-  }
   return {
-    url: stored.url || import.meta.env.VITE_SUPABASE_URL || "",
-    anonKey: stored.anonKey || import.meta.env.VITE_SUPABASE_ANON_KEY || "",
-    portalUrl: stored.portalUrl || import.meta.env.VITE_PORTAL_URL || "https://ravsoft-portal.pages.dev/developer",
-    licenseUrl: stored.licenseUrl || import.meta.env.VITE_MASTER_LICENSE_URL || "",
-    licenseAnonKey: stored.licenseAnonKey || import.meta.env.VITE_MASTER_LICENSE_ANON_KEY || "",
+    url: import.meta.env.VITE_SUPABASE_URL || "",
+    anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || "",
+    portalUrl: import.meta.env.VITE_PORTAL_URL || "https://ravsoft-portal.pages.dev/developer",
+    licenseUrl: import.meta.env.VITE_MASTER_LICENSE_URL || "",
+    licenseAnonKey: import.meta.env.VITE_MASTER_LICENSE_ANON_KEY || "",
   };
-}
-
-export function saveCloudConfig(config: CloudConfig) {
-  localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
 }
 
 let client: SupabaseClient | null = null;
@@ -47,7 +39,7 @@ export function supabase(): SupabaseClient | null {
 
 export async function signIn(email: string, password: string): Promise<Session> {
   const sb = supabase();
-  if (!sb) throw new Error("Master project is not configured. Add it in Settings.");
+  if (!sb) throw new Error("Workspace connection is missing from this deployment. Contact RAVBsoft.");
   const { data, error } = await sb.auth.signInWithPassword({ email, password });
   if (error) throw new Error(error.message);
   if (!data.session) throw new Error("No session was returned. Check your credentials.");

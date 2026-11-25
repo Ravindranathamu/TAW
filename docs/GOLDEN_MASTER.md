@@ -68,8 +68,8 @@ Get-FileHash -Algorithm SHA256 `
 1. Developer portal creates/authorises the Supabase project and issues a TAW licence key.
 2. Apply the four golden-master files above.
 3. Set `app_metadata.company_id` on each company user; the RPCs use it to scope all rows.
-4. Give the user the app URL plus the Supabase URL/anon key.
+4. Bake the Supabase URL/anon key and licence RPC values into the deployed build; give the user only the app URL, installation ID and initial login.
 5. User signs in; TAW creates the company row on first workspace save.
-6. Portal licence key is verified from **Settings → Developer-portal licence**.
+6. Portal licence status is polled by installation ID from **Settings → Developer-portal licence**.
 
 The app never creates or provisions Supabase projects. That remains a developer-portal operation.

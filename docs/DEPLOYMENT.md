@@ -41,7 +41,7 @@ The portal can also deploy a built zip/folder. Configure these environment varia
 | `VITE_WAHA_WEBHOOK_SECRET` | Shared secret for incoming WAHA webhooks |
 | `VITE_WAHA_WEBHOOK_RELAY_URL` | Public relay that forwards WAHA events to the app |
 
-Settings entered in the app are stored on the device and override build-time values.
+These values are applied by the initial deployment and are build-time only. The app never asks the owner to enter them; **Settings → Workspace connection** shows read-only connection status. Local demo mode needs none of these variables.
 
 ## Supabase setup
 

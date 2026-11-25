@@ -26,7 +26,7 @@ npm run dev            # http://127.0.0.1:5180
 
 Open `/login` for owners or `/driver-login` for drivers and choose the demo option, or sign in with the account issued by the company. Demo state is stored only in browser `localStorage`. No data leaves the device. Customers never log in — they open the public `/track/:token` link sent by TAW.
 
-For cloud mode, fill in `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (or set them in **Settings → Workspace connection**). The app loads the workspace through `taw_get_workspace()` and persists changes through `taw_save_workspace()`. Public tracking uses the token-scoped `taw_public_tracking()` RPC, which is granted to `anon`.
+For cloud mode, the deployment pipeline injects `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_MASTER_LICENSE_URL` and `VITE_MASTER_LICENSE_ANON_KEY` at build time. Owners never enter server URLs or keys; **Settings → Workspace connection** is read-only status only. The app loads the workspace through `taw_get_workspace()` and persists changes through `taw_save_workspace()`. Public tracking uses the token-scoped `taw_public_tracking()` RPC, which is granted to `anon`.
 
 ## What is included
 

@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import { BadgeCheck, Clipboard, Cloud, Loader2, MessageCircle, RefreshCw, Save, ShieldCheck } from "lucide-react";
 import { useTaw } from "../state/TawStore";
 import { AlertStrip, Badge, Card, Field, PageHead } from "../components/ui";
-import { currentSession, getCloudConfig, saveCloudConfig, type CloudConfig } from "../lib/cloud";
+import { currentSession, getCloudConfig } from "../lib/cloud";
 import { getWahaConfig, saveWahaConfig, wahaWebhookHint, type WahaConfig } from "../lib/waha";
 import { TAW_LICENSE_KEY_STORAGE } from "../lib/licence";
 import { num, shortDate } from "../lib/utils";
@@ -11,7 +11,7 @@ import { num, shortDate } from "../lib/utils";
 export function SettingsPage() {
   const { state, mode, updateCompany, refresh, notify, licence, verifyLicence, syncLicence } = useTaw();
   const location = useLocation();
-  const [config, setConfig] = useState<CloudConfig>(getCloudConfig());
+  const config = getCloudConfig();
   const [waha, setWaha] = useState<WahaConfig>(getWahaConfig());
   const [licenceKey, setLicenceKey] = useState(localStorage.getItem(TAW_LICENSE_KEY_STORAGE) ?? "");
   const [checking, setChecking] = useState(false);
@@ -57,7 +57,7 @@ export function SettingsPage() {
 
   return (
     <>
-      <PageHead title="Settings" subtitle="Company profile, Supabase workspace and developer-portal licence" />
+      <PageHead title="Settings" subtitle="Company profile, workspace status and developer-portal licence" />
       <AlertStrip tone="info"><ShieldCheck size={13} style={{ verticalAlign: -2, marginRight: 5 }} /> TAW is a separate RAVBsoft product line. Deployment, releases and licensing are managed from the <a href={config.portalUrl} target="_blank" rel="noreferrer" style={{ textDecoration: "underline", fontWeight: 700 }}>developer portal</a>.</AlertStrip>
 
       <Card title="Company profile" subtitle="Used on IRD invoices and customer tracking">
@@ -76,17 +76,23 @@ export function SettingsPage() {
       </Card>
 
       <Card title="Workspace connection" subtitle={email ? `Signed in as ${email}` : mode === "demo" ? "Local demo — no server connection" : "No active session"}>
-        <div className="form-grid">
-          <Field label="Supabase URL" full><input className="input" value={config.url} onChange={(e) => setConfig({ ...config, url: e.target.value })} placeholder="https://project.supabase.co" /></Field>
-          <Field label="Publishable / anon key" full><input className="input" value={config.anonKey} onChange={(e) => setConfig({ ...config, anonKey: e.target.value })} /></Field>
-          <Field label="Portal URL" full><input className="input" value={config.portalUrl} onChange={(e) => setConfig({ ...config, portalUrl: e.target.value })} /></Field>
-          <Field label="Licence RPC project URL" full><input className="input" value={config.licenseUrl} onChange={(e) => setConfig({ ...config, licenseUrl: e.target.value })} /></Field>
-          <Field label="Licence RPC anon key" full><input className="input" value={config.licenseAnonKey} onChange={(e) => setConfig({ ...config, licenseAnonKey: e.target.value })} /></Field>
+        <div className="alert-strip alert-info">
+          <Cloud size={13} style={{ verticalAlign: -2, marginRight: 5 }} />
+          Server URLs and keys are applied automatically during the initial deployment. Owners do not need to fill or change them here.
         </div>
-        <div style={{ display: "grid", gap: 8, marginTop: 12 }}>
-          <button className="btn btn-brand btn-block" onClick={() => { saveCloudConfig(config); notify({ tone: "ok", text: "Connection settings saved on this device." }); }}><Cloud size={14} /> Save connection</button>
-          <button className="btn btn-ghost btn-block" disabled={mode !== "cloud"} onClick={() => void refresh()}><RefreshCw size={14} /> Pull latest cloud data</button>
+        <div className="kv" style={{ marginTop: 12 }}>
+          <dt>Workspace</dt>
+          <dd>{mode === "demo" ? "Local demo" : config.url ? config.url.replace(/^https?:\/\//, "").replace(/\/.*$/, "") : "Not configured"}</dd>
+          <dt>Session</dt>
+          <dd>{email || (mode === "demo" ? "Local demo" : "Not signed in")}</dd>
+          <dt>Developer portal</dt>
+          <dd><a href={config.portalUrl} target="_blank" rel="noreferrer" style={{ textDecoration: "underline" }}>Open portal</a></dd>
+          <dt>Licence server</dt>
+          <dd>{config.licenseUrl ? "Configured" : "Not configured"}</dd>
         </div>
+        <button className="btn btn-ghost btn-block btn-sm" style={{ marginTop: 12 }} disabled={mode !== "cloud"} onClick={() => void refresh()}>
+          <RefreshCw size={14} /> Pull latest cloud data
+        </button>
       </Card>
 
       <Card title="WAHA (WhatsApp HTTP API)" subtitle="Send tracking links, quotes and live locations; import customer location pins">

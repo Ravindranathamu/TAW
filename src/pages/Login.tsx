@@ -97,7 +97,7 @@ export function LoginPage({ kind = "owner" }: { kind?: "owner" | "driver" }) {
 
           {!config.url && (
             <p className="sub" style={{ color: "#ad3a4e", marginTop: 12 }}>
-              No workspace configured. Add your Supabase URL in Settings or copy <code>.env.example</code> to <code>.env</code>.
+              This deployment has no workspace connection. Contact RAVBsoft with the installation ID; the demo below works without one.
             </p>
           )}
 
