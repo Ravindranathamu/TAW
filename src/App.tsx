@@ -24,6 +24,7 @@ import { DriverPage } from "./pages/DriverApp";
 import { TrackPage } from "./pages/Track";
 import { SettingsPage } from "./pages/Settings";
 import { Card, EmptyState } from "./components/ui";
+import { LicenceGate } from "./components/LicencePrompts";
 
 function ToastBar() {
   const { toast, clearToast } = useTaw();
@@ -65,10 +66,10 @@ function Shell() {
         <Route path="/driver-login" element={<LoginPage kind="driver" />} />
         <Route path="/track/:token" element={<TrackPage />} />
 
-        <Route path="/driver" element={<RoleGuard allow="driver"><DriverPage /></RoleGuard>} />
-        <Route path="/driver/:tripId" element={<RoleGuard allow="driver"><DriverPage /></RoleGuard>} />
+        <Route path="/driver" element={<RoleGuard allow="driver"><LicenceGate><DriverPage /></LicenceGate></RoleGuard>} />
+        <Route path="/driver/:tripId" element={<RoleGuard allow="driver"><LicenceGate><DriverPage /></LicenceGate></RoleGuard>} />
 
-        <Route element={<RoleGuard allow="owner"><Layout /></RoleGuard>}>
+        <Route element={<RoleGuard allow="owner"><LicenceGate><Layout /></LicenceGate></RoleGuard>}>
           <Route path="/setup" element={<SetupPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/dispatch" element={<DispatchPage />} />

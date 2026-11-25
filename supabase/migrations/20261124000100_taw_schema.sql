@@ -118,7 +118,22 @@ create table if not exists public.taw_companies (
   alert_days integer[] not null default array[30, 14, 3],
   currency text not null default 'LKR',
   setup_complete boolean not null default false,
-  created_at text not null default now()::text
+  created_at text not null default now()::text,
+  -- Portal licence state. Fresh installations start a 30-day full-access trial.
+  installation_id text not null default '',
+  trial_started_at text not null default now()::text,
+  license_status text not null default 'Trial'
+    check (license_status in ('Trial','Active','Expired','Suspended')),
+  license_plan text not null default 'Growth'
+    check (license_plan in ('Lite','Starter','Growth','Pro','Enterprise')),
+  license_expires_at text,
+  license_activated_at text,
+  licence_activation_acknowledged_at text,
+  license_key text not null default '',
+  license_holder text not null default '',
+  last_licence_sync_at text,
+  last_licence_server_time text,
+  licence_clock_rollback boolean not null default false
 );
 
 create table if not exists public.taw_vehicle_catalog (
@@ -456,7 +471,19 @@ begin
         'alertDays', c.alert_days,
         'currency', c.currency,
         'setupComplete', c.setup_complete,
-        'createdAt', c.created_at
+        'createdAt', c.created_at,
+        'installationId', c.installation_id,
+        'trialStartedAt', c.trial_started_at,
+        'licenseStatus', c.license_status,
+        'licensePlan', c.license_plan,
+        'licenseExpiresAt', c.license_expires_at,
+        'licenseActivatedAt', c.license_activated_at,
+        'licenceActivationAcknowledgedAt', c.licence_activation_acknowledged_at,
+        'licenseKey', nullif(c.license_key, ''),
+        'licenseHolder', nullif(c.license_holder, ''),
+        'lastLicenceSyncAt', c.last_licence_sync_at,
+        'lastLicenceServerTime', c.last_licence_server_time,
+        'licenceClockRollback', c.licence_clock_rollback
       ) from public.taw_companies c where c.id = v_company_id
     ),
     'catalog', coalesce((
@@ -599,20 +626,43 @@ begin
 
   insert into public.taw_companies (
     id, name, registered_name, address, phone, email, tin, vat_rate, vat_registered,
-    partner_code, drive_root_folder_id, alert_days, currency, setup_complete, created_at
+    partner_code, drive_root_folder_id, alert_days, currency, setup_complete, created_at,
+    installation_id, trial_started_at, license_status, license_plan, license_expires_at,
+    license_activated_at, licence_activation_acknowledged_at, license_key, license_holder,
+    last_licence_sync_at, last_licence_server_time, licence_clock_rollback
   ) values (
     c ->> 'id', public.taw_txt(c, 'name'), public.taw_txt(c, 'registeredName'),
     public.taw_txt(c, 'address'), public.taw_txt(c, 'phone'), public.taw_txt(c, 'email'),
     public.taw_txt(c, 'tin'), public.taw_num(c, 'vatRate', 18), public.taw_bool(c, 'vatRegistered', true),
     public.taw_txt(c, 'partnerCode'), public.taw_txt(c, 'driveRootFolderId'),
     public.taw_int_array(c, 'alertDays'), public.taw_txt(c, 'currency', 'LKR'),
-    public.taw_bool(c, 'setupComplete'), public.taw_txt(c, 'createdAt', now()::text)
+    public.taw_bool(c, 'setupComplete'), public.taw_txt(c, 'createdAt', now()::text),
+    public.taw_txt(c, 'installationId'), public.taw_txt(c, 'trialStartedAt', now()::text),
+    case when public.taw_txt(c, 'licenseStatus') in ('Trial','Active','Expired','Suspended')
+      then public.taw_txt(c, 'licenseStatus') else 'Trial' end,
+    case when public.taw_txt(c, 'licensePlan') in ('Lite','Starter','Growth','Pro','Enterprise')
+      then public.taw_txt(c, 'licensePlan') else 'Growth' end,
+    nullif(public.taw_txt(c, 'licenseExpiresAt'), ''),
+    nullif(public.taw_txt(c, 'licenseActivatedAt'), ''),
+    nullif(public.taw_txt(c, 'licenceActivationAcknowledgedAt'), ''),
+    public.taw_txt(c, 'licenseKey'), public.taw_txt(c, 'licenseHolder'),
+    nullif(public.taw_txt(c, 'lastLicenceSyncAt'), ''),
+    nullif(public.taw_txt(c, 'lastLicenceServerTime'), ''),
+    public.taw_bool(c, 'licenceClockRollback', false)
   ) on conflict (id) do update set
     name = excluded.name, registered_name = excluded.registered_name, address = excluded.address,
     phone = excluded.phone, email = excluded.email, tin = excluded.tin, vat_rate = excluded.vat_rate,
     vat_registered = excluded.vat_registered, partner_code = excluded.partner_code,
     drive_root_folder_id = excluded.drive_root_folder_id, alert_days = excluded.alert_days,
-    currency = excluded.currency, setup_complete = excluded.setup_complete, created_at = excluded.created_at;
+    currency = excluded.currency, setup_complete = excluded.setup_complete, created_at = excluded.created_at,
+    installation_id = excluded.installation_id, trial_started_at = excluded.trial_started_at,
+    license_status = excluded.license_status, license_plan = excluded.license_plan,
+    license_expires_at = excluded.license_expires_at, license_activated_at = excluded.license_activated_at,
+    licence_activation_acknowledged_at = excluded.licence_activation_acknowledged_at,
+    license_key = excluded.license_key, license_holder = excluded.license_holder,
+    last_licence_sync_at = excluded.last_licence_sync_at,
+    last_licence_server_time = excluded.last_licence_server_time,
+    licence_clock_rollback = excluded.licence_clock_rollback;
 
   -- company-owned rows are replaced atomically with the submitted workspace
   delete from public.taw_vehicles where company_id = v_company_id;

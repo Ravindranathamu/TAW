@@ -21,6 +21,7 @@ import {
 import { useTaw } from "../state/TawStore";
 import { getCloudConfig } from "../lib/cloud";
 import { Avatar, Badge } from "./ui";
+import { LicencePrompts } from "./LicencePrompts";
 
 const OWNER_TABS = [
   { to: "/dashboard", label: "Home", icon: LayoutDashboard },
@@ -64,6 +65,7 @@ export function Layout() {
 
   return (
     <div className="app-shell">
+      <LicencePrompts />
       <header className="topbar">
         <button className="brand" onClick={() => navigate("/dashboard")}>
           <span className="brand-mark">TAW</span>

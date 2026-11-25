@@ -5,6 +5,10 @@
 export type Mode = "demo" | "cloud";
 export type Role = "owner" | "driver" | "customer";
 
+/** Shared RAVBsoft licence vocabulary. TAW has no paid module flags. */
+export type LicenceStatus = "Trial" | "Active" | "Expired" | "Suspended";
+export type LicencePlan = "Lite" | "Starter" | "Growth" | "Pro" | "Enterprise";
+
 export type StaffRole = "PERMANENT_DRIVER" | "TEMP_DRIVER" | "HELPER";
 export type TruckStatus = "AVAILABLE" | "ON_TRIP" | "IN_WORKSHOP" | "RETIRED";
 export type ComplianceKind = "INSURANCE" | "REVENUE_LICENSE" | "FITNESS" | "EMISSION";
@@ -39,6 +43,21 @@ export interface Company {
   currency: "LKR";
   setupComplete: boolean;
   createdAt: string;
+  /** Portal-assigned installation ID, shown in Settings → Licence. */
+  installationId: string;
+  /** Client setup starts the 30-day full-access trial. */
+  trialStartedAt: string;
+  licenseStatus: LicenceStatus;
+  licensePlan: LicencePlan | string;
+  licenseExpiresAt?: string;
+  licenseActivatedAt?: string;
+  licenceActivationAcknowledgedAt?: string;
+  licenseKey?: string;
+  licenseHolder?: string;
+  lastLicenceSyncAt?: string;
+  lastLicenceServerTime?: string;
+  /** Set when the device clock moves backwards until a fresh portal poll repairs it. */
+  licenceClockRollback?: boolean;
 }
 
 export interface VehicleCatalogItem {

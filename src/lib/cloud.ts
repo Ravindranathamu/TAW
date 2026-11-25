@@ -108,21 +108,39 @@ export interface PortalLicence {
   status: string;
   expiresAt: string;
   seats: number;
+  installationId?: string;
+  holder?: string;
+  serverTime?: string;
   message?: string;
 }
 
-/** Validates the installation's licence key against the RAVBsoft developer portal. */
-export async function checkPortalLicence(key: string): Promise<PortalLicence> {
+const emptyLicence = (message: string): PortalLicence => ({
+  valid: false,
+  plan: "",
+  status: "",
+  expiresAt: "",
+  seats: 0,
+  message,
+});
+
+/**
+ * Outbound-only licence poll against the RAVBsoft developer portal.
+ *
+ * The new order pipeline assigns a TAW-LK installation ID; the portal's
+ * poll_taw_license accepts that ID and returns Trial/Active directly. Older
+ * TAW-YYYYMMDD keys are still accepted by the same RPC as a fallback.
+ */
+export async function checkPortalLicence(identifier: string): Promise<PortalLicence> {
   const config = getCloudConfig();
   const url = config.licenseUrl || config.url;
   const anon = config.licenseAnonKey || config.anonKey;
-  if (!url || !anon || !key.trim()) {
-    return { valid: false, plan: "", status: "", expiresAt: "", seats: 0, message: "Licence key not configured." };
+  if (!url || !anon || !identifier.trim()) {
+    return emptyLicence("Installation ID or licence key not configured.");
   }
   const res = await fetch(`${url.replace(/\/+$/, "")}/rest/v1/rpc/poll_taw_license`, {
     method: "POST",
     headers: { "Content-Type": "application/json", apikey: anon, Authorization: `Bearer ${anon}` },
-    body: JSON.stringify({ p_license_key: key.trim().toUpperCase() }),
+    body: JSON.stringify({ p_license_key: identifier.trim().toUpperCase() }),
   });
   const text = await res.text();
   if (!res.ok) {
@@ -136,12 +154,12 @@ export async function checkPortalLicence(key: string): Promise<PortalLicence> {
     } catch {
       /* keep raw */
     }
-    return { valid: false, plan: "", status: "", expiresAt: "", seats: 0, message };
+    return emptyLicence(message);
   }
   const parsed = JSON.parse(text) as unknown;
   const data = (Array.isArray(parsed) ? parsed[0] : parsed) as Record<string, unknown> | undefined;
   if (!data) {
-    return { valid: false, plan: "", status: "", expiresAt: "", seats: 0, message: "Licence RPC returned no data." };
+    return emptyLicence("Licence RPC returned no data.");
   }
   const product = String(data.product ?? "TAW");
   const valid = Boolean(data.valid ?? data.ok);
@@ -152,6 +170,9 @@ export async function checkPortalLicence(key: string): Promise<PortalLicence> {
     status: String(data.status ?? ""),
     expiresAt: String(data.expires_at ?? data.expiresAt ?? ""),
     seats: Number(data.seats ?? 0),
+    installationId: String(data.installation_id ?? data.installationId ?? "") || undefined,
+    holder: String(data.holder ?? "") || undefined,
+    serverTime: String(data.server_time ?? data.serverTime ?? "") || undefined,
     message:
       product.toUpperCase() === "TAW"
         ? String(data.message ?? "")

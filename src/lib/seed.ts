@@ -91,6 +91,11 @@ export const seedCompany = (): Company => ({
   currency: "LKR",
   setupComplete: true,
   createdAt: isoDays(-420),
+  installationId: "",
+  trialStartedAt: new Date().toISOString(),
+  licenseStatus: "Trial",
+  licensePlan: "Growth",
+  licenceClockRollback: false,
 });
 
 const doc = (kind: ComplianceDoc["kind"], number: string, expiryDays: number, provider = "SLIC"): ComplianceDoc => ({
