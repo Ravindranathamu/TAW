@@ -43,7 +43,7 @@ export interface Company {
   currency: "LKR";
   setupComplete: boolean;
   createdAt: string;
-  /** Portal-assigned installation ID, shown in Settings → Licence. */
+  /** Portal-assigned installation ID; baked into the deployed build. */
   installationId: string;
   /** Client setup starts the 30-day full-access trial. */
   trialStartedAt: string;

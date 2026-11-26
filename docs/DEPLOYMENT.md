@@ -34,6 +34,8 @@ The portal can also deploy a built zip/folder. Configure these environment varia
 | `VITE_PORTAL_URL` | Developer portal URL |
 | `VITE_MASTER_LICENSE_URL` | Supabase project hosting the licence RPC |
 | `VITE_MASTER_LICENSE_ANON_KEY` | Publishable key for the licence RPC |
+| `VITE_TAW_INSTALLATION_ID` | Portal-assigned `TAW-LK-*` ID baked into this build |
+| `VITE_TAW_LICENSE_KEY` | Legacy key fallback; normally left blank |
 | `VITE_GOOGLE_MAPS_KEY` | Optional; built-in route table and map pins are used when blank |
 | `VITE_WAHA_URL` | WAHA base URL, e.g. `https://waha.example.com` |
 | `VITE_WAHA_API_KEY` | WAHA `X-Api-Key` |
@@ -63,9 +65,9 @@ TAW uses the shared RAVBsoft order pipeline. The developer shares the portal's p
 1. a `TAW-LK-*` installation ID (preferred) from `developer_client_installations`, returning `Trial` or `Active`; or
 2. an older `TAW-YYYYMMDD-XXXXXXXX` key from `developer_license_keys` as a compatibility fallback.
 
-Only TAW product rows are accepted. Installations that are `Expired` or `Suspended` lock the app without touching data. A successful check starts a 7-day offline grace window; a backwards device clock forces a fresh online check before access continues. Settings → Licence shows the installation ID, plan, trial days or paid expiry, the last successful portal check and remaining offline grace. The owner gets a daily activation prompt from day 15 of the trial (24-hour snooze) and a one-time thank-you after activation. TAW polls the portal every six hours while signed in. The local `taw_licences` table remains a clean admin-only compatibility table and is never part of client data.
+Only TAW product rows are accepted. Installations that are `Expired` or `Suspended` lock the app without touching data. A successful check starts a 7-day offline grace window; a backwards device clock forces a fresh online check before access continues. The owner gets a daily activation prompt from day 15 of the trial (24-hour snooze) and a one-time thank-you after activation. TAW polls the portal every six hours while signed in. The local `taw_licences` table remains a clean admin-only compatibility table and is never part of client data.
 
-Set `VITE_MASTER_LICENSE_URL` and `VITE_MASTER_LICENSE_ANON_KEY` to the master portal project. The poll is outbound-only; TAW exposes no inbound licence endpoint.
+The client never enters or selects a licence in the app. The portal injects `VITE_TAW_INSTALLATION_ID`, `VITE_MASTER_LICENSE_URL` and `VITE_MASTER_LICENSE_ANON_KEY` into the deployed build; the app identifies itself automatically on each poll. Settings has no licence form, only a read-only workspace status card. The poll is outbound-only; TAW exposes no inbound licence endpoint.
 
 ## Portal-managed deployment
 
@@ -87,4 +89,4 @@ The developer portal treats TAW as its own product line:
 - `/track/:token` polls `taw_public_tracking()` and shows new GPS without sign-in.
 - A small edit persists through `taw_save_workspace()` and reloads correctly.
 - Driver automatic GPS publishes points without a manual coordinate form. Use the native wrapper for screen-off tracking.
-- Settings licence check returns the expected portal status.
+- After login, TAW polls the portal automatically with the baked-in installation ID and shows the correct Trial/Active state.

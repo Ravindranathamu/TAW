@@ -7,6 +7,10 @@ export interface CloudConfig {
   portalUrl: string;
   licenseUrl: string;
   licenseAnonKey: string;
+  /** Assigned by the portal and baked into the deployed build. */
+  installationId: string;
+  /** Compatibility fallback for installations issued before the order pipeline. */
+  licenseKey: string;
 }
 
 /**
@@ -20,6 +24,8 @@ export function getCloudConfig(): CloudConfig {
     portalUrl: import.meta.env.VITE_PORTAL_URL || "https://ravsoft-portal.pages.dev/developer",
     licenseUrl: import.meta.env.VITE_MASTER_LICENSE_URL || "",
     licenseAnonKey: import.meta.env.VITE_MASTER_LICENSE_ANON_KEY || "",
+    installationId: import.meta.env.VITE_TAW_INSTALLATION_ID || "",
+    licenseKey: import.meta.env.VITE_TAW_LICENSE_KEY || "",
   };
 }
 
@@ -64,7 +70,12 @@ export async function pullCloud(): Promise<TawState> {
   const { data, error } = await sb.rpc("taw_get_workspace");
   if (error) throw new Error(error.message);
   if (!data) throw new Error("No workspace returned. Run the golden-master migration first.");
-  return data as TawState;
+  const state = data as TawState;
+  const installationId = getCloudConfig().installationId.trim().toUpperCase();
+  if (installationId && !state.company?.installationId) {
+    state.company.installationId = installationId;
+  }
+  return state;
 }
 
 /** Persists the whole workspace; the server-side RPC validates the company scope. */

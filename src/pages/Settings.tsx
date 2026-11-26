@@ -1,22 +1,16 @@
 import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
-import { BadgeCheck, Clipboard, Cloud, Loader2, MessageCircle, RefreshCw, Save, ShieldCheck } from "lucide-react";
+import { Clipboard, Cloud, MessageCircle, RefreshCw, Save, ShieldCheck } from "lucide-react";
 import { useTaw } from "../state/TawStore";
 import { AlertStrip, Badge, Card, Field, PageHead } from "../components/ui";
 import { currentSession, getCloudConfig } from "../lib/cloud";
 import { getWahaConfig, saveWahaConfig, wahaWebhookHint, type WahaConfig } from "../lib/waha";
-import { TAW_LICENSE_KEY_STORAGE } from "../lib/licence";
-import { num, shortDate } from "../lib/utils";
+import { num } from "../lib/utils";
 
 export function SettingsPage() {
-  const { state, mode, updateCompany, refresh, notify, licence, verifyLicence, syncLicence } = useTaw();
-  const location = useLocation();
+  const { state, mode, updateCompany, refresh, notify } = useTaw();
   const config = getCloudConfig();
   const [waha, setWaha] = useState<WahaConfig>(getWahaConfig());
-  const [licenceKey, setLicenceKey] = useState(localStorage.getItem(TAW_LICENSE_KEY_STORAGE) ?? "");
-  const [checking, setChecking] = useState(false);
   const [email, setEmail] = useState("");
-  const [installationId, setInstallationId] = useState(state.company.installationId);
   const [company, setCompany] = useState({ ...state.company });
 
   useEffect(() => {
@@ -24,40 +18,12 @@ export function SettingsPage() {
   }, []);
 
   useEffect(() => {
-    setInstallationId(state.company.installationId);
     setCompany({ ...state.company });
   }, [state.company]);
 
-  useEffect(() => {
-    if ((location.state as { tab?: string } | null)?.tab === "licence") {
-      document.getElementById("licence-settings")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }, [location.state]);
-
-  async function verify(identifier?: string) {
-    setChecking(true);
-    try {
-      const result = await verifyLicence(identifier);
-      setLicenceKey((identifier ?? licenceKey).trim().toUpperCase());
-      notify({ tone: result.ok ? "ok" : "error", text: result.message });
-    } finally {
-      setChecking(false);
-    }
-  }
-
-  async function saveInstallation() {
-    const clean = installationId.trim().toUpperCase();
-    if (!clean) {
-      notify({ tone: "error", text: "Enter the installation ID from the RAVBsoft handover." });
-      return;
-    }
-    updateCompany({ installationId: clean });
-    await verify(clean);
-  }
-
   return (
     <>
-      <PageHead title="Settings" subtitle="Company profile, workspace status and developer-portal licence" />
+      <PageHead title="Settings" subtitle="Company profile, workspace status and WhatsApp connection" />
       <AlertStrip tone="info"><ShieldCheck size={13} style={{ verticalAlign: -2, marginRight: 5 }} /> TAW is a separate RAVBsoft product line. Deployment, releases and licensing are managed from the <a href={config.portalUrl} target="_blank" rel="noreferrer" style={{ textDecoration: "underline", fontWeight: 700 }}>developer portal</a>.</AlertStrip>
 
       <Card title="Company profile" subtitle="Used on IRD invoices and customer tracking">
@@ -111,59 +77,6 @@ export function SettingsPage() {
         <button className="btn btn-brand btn-block btn-sm" style={{ marginTop: 12 }} onClick={() => { saveWahaConfig(waha); notify({ tone: "ok", text: "WAHA connection saved on this device." }); }}><Save size={13} /> Save WAHA connection</button>
         <p className="sub" style={{ marginTop: 10 }}>TAW uses <code>/api/sendText</code> and <code>/api/sendLocation</code>. Customer location messages arrive as <code>message</code> webhooks; Dispatch can also paste the payload directly.</p>
       </Card>
-
-      <div id="licence-settings">
-        <Card title="Developer-portal licence" subtitle="30-day full-access trial · activation managed by the RAVBsoft portal">
-          <div className="licence-summary">
-            <Badge tone={licence.mode === "Active" ? "ok" : licence.mode === "Trial" ? "info" : "danger"} plain>
-              {mode === "demo" ? "Local demo" : licence.mode}
-            </Badge>
-            <span>Plan {licence.plan}</span>
-            <span>Installation {licence.installationId || state.company.installationId || "—"}</span>
-            {licence.mode === "Trial" && <span>{licence.daysLeft} trial day{licence.daysLeft === 1 ? "" : "s"} left · all features unlocked</span>}
-            {licence.mode === "Active" && <span>{licence.lifetime ? "Lifetime licence" : `Active${licence.expiresAt ? ` until ${shortDate(licence.expiresAt)}` : ""}`}</span>}
-            {state.company.licenseActivatedAt && <span>Activated {shortDate(state.company.licenseActivatedAt)}</span>}
-            {licence.clockRollback && <span>Clock check required — reconnect</span>}
-            {!licence.clockRollback && mode !== "demo" && state.company.lastLicenceSyncAt && (
-              <span>{licence.offlineGraceDaysLeft} offline grace day{licence.offlineGraceDaysLeft === 1 ? "" : "s"} left</span>
-            )}
-          </div>
-
-          <div className="form-grid" style={{ marginTop: 12 }}>
-            <Field label="Installation ID" hint="Assigned by the portal during provisioning — for example TAW-LK-4A9C21EF" full>
-              <input className="input mono" value={installationId} onChange={(e) => setInstallationId(e.target.value.toUpperCase())} placeholder="TAW-LK-XXXXXXXX" />
-            </Field>
-            <Field label="Activation key (optional)" hint="Older TAW-YYYYMMDD keys are still accepted; the installation ID is preferred." full>
-              <input className="input mono" value={licenceKey} onChange={(e) => setLicenceKey(e.target.value.toUpperCase())} placeholder="TAW-YYYYMMDD-XXXXXXXX" />
-            </Field>
-          </div>
-
-          <div className="row wrap" style={{ marginTop: 12 }}>
-            <button className="btn btn-brand" disabled={checking || !installationId.trim()} onClick={() => void saveInstallation()}>
-              {checking ? <Loader2 className="spin" size={14} /> : <BadgeCheck size={14} />} {checking ? "Checking…" : "Save ID & sync licence"}
-            </button>
-            <button className="btn btn-secondary" disabled={checking} onClick={() => void syncLicence()}>
-              <RefreshCw size={14} /> Sync now
-            </button>
-            <button className="btn btn-ghost" disabled={checking || !licenceKey.trim()} onClick={() => void verify(licenceKey)}>
-              Verify key
-            </button>
-          </div>
-
-          <div className="alert-strip alert-info" style={{ marginTop: 12 }}>
-            Trial = every TAW feature. After payment the developer activates this installation from
-            the portal; the app records the activation, removes the reminder and keeps all data,
-            drivers and settings unchanged. Licensing is outbound-only — TAW never opens an
-            inbound licence endpoint.
-          </div>
-
-          <div className="kv" style={{ marginTop: 12 }}>
-            <dt>Licensed features</dt><dd>All TAW features (activation is all-or-nothing)</dd>
-            <dt>Last portal check</dt><dd>{state.company.lastLicenceSyncAt ? shortDate(state.company.lastLicenceSyncAt) : "—"}</dd>
-            <dt>Licence holder</dt><dd>{state.company.licenseHolder || state.company.name}</dd>
-          </div>
-        </Card>
-      </div>
 
       <Card title="Golden master" subtitle="Clean template files shipped with this installation">
         <div className="kv">

@@ -11,7 +11,6 @@ export {
   TRIAL_DAYS,
 } from "./licenceConfig";
 
-export const TAW_LICENSE_KEY_STORAGE = "taw_license_key";
 const CLOCK_KEY = "taw_licence_monotonic_v1";
 
 /** TAW is all-or-nothing: activation unlocks the whole product. */

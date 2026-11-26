@@ -56,7 +56,6 @@ import {
   markClockRepaired,
   normaliseLicenceStatus,
   offlineGraceDaysLeft,
-  TAW_LICENSE_KEY_STORAGE,
   withinOfflineGrace,
   type LicenceInfo,
 } from "../lib/licence";
@@ -103,7 +102,6 @@ interface TawContextValue {
   savePayroll: (entry: PayrollEntry) => void;
   addExpense: (item: Expense) => void;
   markNotificationsRead: () => void;
-  verifyLicence: (identifier?: string) => Promise<{ ok: boolean; message: string }>;
   syncLicence: () => Promise<{ ok: boolean; message: string }>;
   acknowledgeActivation: () => void;
 }
@@ -177,13 +175,9 @@ export function TawProvider({ children }: { children: ReactNode }) {
         company.installationId = result.installationId.trim().toUpperCase();
       }
       if (result.holder) company.licenseHolder = result.holder;
-      if (status === "Active") {
-        if (becameActive) {
-          company.licenseActivatedAt = now;
-          company.licenceActivationAcknowledgedAt = undefined;
-        }
-        company.licenseKey =
-          localStorage.getItem(TAW_LICENSE_KEY_STORAGE) || company.licenseKey;
+      if (status === "Active" && becameActive) {
+        company.licenseActivatedAt = now;
+        company.licenceActivationAcknowledgedAt = undefined;
       }
       company.lastLicenceSyncAt = now;
       company.lastLicenceServerTime = result.serverTime || now;
@@ -193,14 +187,18 @@ export function TawProvider({ children }: { children: ReactNode }) {
     return true;
   }, []);
 
-  const resolveIdentifier = useCallback(
-    (company: Company, explicit?: string) =>
-      (explicit?.trim() ||
-        company.installationId?.trim() ||
-        localStorage.getItem(TAW_LICENSE_KEY_STORAGE) ||
-        "").trim().toUpperCase(),
-    [],
-  );
+  const resolveIdentifier = useCallback((company: Company, explicit?: string) => {
+    const config = getCloudConfig();
+    return (
+      explicit?.trim() ||
+      company.installationId?.trim() ||
+      config.installationId.trim() ||
+      config.licenseKey.trim() ||
+      ""
+    )
+      .trim()
+      .toUpperCase();
+  }, []);
 
   const syncLicenceFor = useCallback(
     async (
@@ -211,7 +209,7 @@ export function TawProvider({ children }: { children: ReactNode }) {
       if (!identifier) {
         return {
           ok: false,
-          message: "Add the installation ID from your RAVBsoft handover in Settings → Licence.",
+          message: "This installation has no licence ID. Contact RAVBsoft with your installation details.",
         };
       }
       if (checkClockRollback()) {
@@ -271,21 +269,6 @@ export function TawProvider({ children }: { children: ReactNode }) {
     const timer = window.setInterval(run, 6 * 60 * 60 * 1000);
     return () => window.clearInterval(timer);
   }, [mode]);
-
-  const verifyLicence = useCallback(
-    async (identifier?: string) => {
-      const clean = resolveIdentifier(state.company, identifier);
-      if (clean) {
-        try {
-          localStorage.setItem(TAW_LICENSE_KEY_STORAGE, clean);
-        } catch {
-          /* storage unavailable */
-        }
-      }
-      return syncLicenceFor(state.company, clean);
-    },
-    [resolveIdentifier, state.company, syncLicenceFor],
-  );
 
   const acknowledgeActivation = useCallback(() => {
     mutate((draft) => {
@@ -507,11 +490,10 @@ export function TawProvider({ children }: { children: ReactNode }) {
       }, { tone: "ok", text: "Payroll entry saved." }),
       addExpense: (item) => mutate((d) => { d.expenses.unshift(item); }, { tone: "ok", text: "Expense recorded." }),
       markNotificationsRead: () => mutate((d) => { d.notifications = d.notifications.map((n) => ({ ...n, read: true })); }),
-      verifyLicence,
       syncLicence,
       acknowledgeActivation,
     }),
-    [mode, role, state, toast, loading, notify, clearToast, enterDemo, enterCloud, leave, refresh, mutate, verifyLicence, syncLicence, acknowledgeActivation],
+    [mode, role, state, toast, loading, notify, clearToast, enterDemo, enterCloud, leave, refresh, mutate, syncLicence, acknowledgeActivation],
   );
 
   return <TawContext.Provider value={value}>{children}</TawContext.Provider>;
