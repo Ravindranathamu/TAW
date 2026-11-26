@@ -37,6 +37,9 @@ export interface Company {
   tin: string; // 9-digit IRD TIN
   vatRate: number; // 18
   vatRegistered: boolean;
+  /** Owner-editable dispatch pricing, in LKR. */
+  baseFee: number;
+  perKmRate: number;
   partnerCode: string; // TAW-to-TAW network id
   driveRootFolderId: string;
   alertDays: number[]; // e.g. [30, 14, 3]

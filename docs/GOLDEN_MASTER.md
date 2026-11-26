@@ -7,6 +7,7 @@ The golden master is a **clean template**, not a production database dump. It co
 | File | Role |
 | --- | --- |
 | `supabase/migrations/20261124000100_taw_schema.sql` | All TAW tables, RLS policies, `taw_get_workspace`, `taw_save_workspace`, `taw_public_tracking`, `poll_taw_license` |
+| `supabase/migrations/20261126000300_taw_pricing_rates.sql` | Additive owner-editable base fee / per-km rate columns and scoped RPCs |
 | `supabase/seed_vehicles_sl.sql` | 43 Sri Lankan vehicle models used by dispatch auto-spec lookup |
 | `supabase/golden-master/manifest.sql` | Version, checksums and expected table list |
 | `supabase/golden-master/verify.sql` | Fails if any client table has rows |
@@ -16,11 +17,13 @@ The golden master is a **clean template**, not a production database dump. It co
 ```sql
 -- 1. schema
 \i supabase/migrations/20261124000100_taw_schema.sql
--- 2. reference catalog only
+-- 2. additive pricing rates
+\i supabase/migrations/20261126000300_taw_pricing_rates.sql
+-- 3. reference catalog only
 \i supabase/seed_vehicles_sl.sql
--- 3. manifest
+-- 4. manifest
 \i supabase/golden-master/manifest.sql
--- 4. verification
+-- 5. verification
 \i supabase/golden-master/verify.sql
 ```
 
@@ -58,6 +61,7 @@ Local demo seed data lives only in `src/lib/seed.ts` and is persisted in the bro
 ```powershell
 Get-FileHash -Algorithm SHA256 `
   'supabase\migrations\20261124000100_taw_schema.sql',`
+  'supabase\migrations\20261126000300_taw_pricing_rates.sql',`
   'supabase\seed_vehicles_sl.sql' | Select-Object Path,Hash
 ```
 
@@ -66,7 +70,7 @@ Get-FileHash -Algorithm SHA256 `
 ## New client installation flow
 
 1. Developer portal receives the client order, creates/authorises the Supabase project and issues a `TAW-LK-*` installation ID.
-2. Apply the four golden-master files above.
+2. Apply the five golden-master files above.
 3. Set `app_metadata.company_id` on each company user; the RPCs use it to scope all rows.
 4. Bake the Supabase URL/anon key and licence RPC values into the deployed build; give the user only the app URL, installation ID and initial login.
 5. User signs in; TAW creates the company row on first workspace save.

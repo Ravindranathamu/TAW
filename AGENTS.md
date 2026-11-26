@@ -39,7 +39,7 @@
 ## Before changing the golden schema
 
 - Update `src/types.ts` and the SQL columns/RPC mapping together.
-- Regenerate the SHA-256 entries in `supabase/golden-master/manifest.sql` after editing `20261124000100_taw_schema.sql` or `seed_vehicles_sl.sql`.
+- Regenerate the SHA-256 entries in `supabase/golden-master/manifest.sql` after editing `20261124000100_taw_schema.sql`, `20261126000300_taw_pricing_rates.sql` or `seed_vehicles_sl.sql`.
 - Re-run `supabase/golden-master/verify.sql` on a fresh database; it must pass with zero client data.
 - Run `npm run build` before finishing any UI change.
 

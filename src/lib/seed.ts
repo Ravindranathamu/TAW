@@ -13,7 +13,7 @@ import type {
 } from "../types";
 import { isoDays, makeNotifications, uid } from "./utils";
 import { buildInvoice } from "./invoice";
-import { calculateQuote, estimateRoute } from "./pricing";
+import { calculateQuote, estimateRoute, ratesForCompany } from "./pricing";
 import { calculateEfficiency } from "./efficiency";
 
 const catalogRows: Array<[string, string, string, string, number, number, number]> = [
@@ -85,6 +85,8 @@ export const seedCompany = (): Company => ({
   tin: "123456789",
   vatRate: 18,
   vatRegistered: true,
+  baseFee: 3500,
+  perKmRate: 180,
   partnerCode: "TAW-KDY-001",
   driveRootFolderId: "",
   alertDays: [30, 14, 3],
@@ -219,6 +221,7 @@ function trip(
     weightKg,
     roadFactor: /kandy|nuwara/i.test(from + to) ? "HILLY" : "NORMAL",
     highwayTolls: route.highwayToll,
+    rates: ratesForCompany(seedCompany()),
   });
   return {
     id,

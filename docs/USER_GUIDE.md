@@ -33,6 +33,8 @@ Open the tracking link sent by TAW. No login is needed. The page shows the vehic
 
 `(base fee + distance × per-km rate) × weight tier × road factor + highway tolls`
 
+The owner can change the base fee and per-km rate in **Settings → Pricing rates**. Saved values apply to new quotes only.
+
 - Weight tiers: Light ≤ 1,500 kg (×1.0), Medium ≤ 3,000 kg (×1.2), Heavy > 3,000 kg (×1.45).
 - Road factors: normal, expressway, urban traffic, hilly, off-road.
 - Toll charges are pass-through and are **not** VAT-applicable.

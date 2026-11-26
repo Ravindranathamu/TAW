@@ -4,14 +4,19 @@ import { useTaw } from "../state/TawStore";
 import { AlertStrip, Badge, Card, Field, PageHead } from "../components/ui";
 import { currentSession, getCloudConfig } from "../lib/cloud";
 import { getWahaConfig, saveWahaConfig, wahaWebhookHint, type WahaConfig } from "../lib/waha";
+import { ratesForCompany } from "../lib/pricing";
 import { num } from "../lib/utils";
 
 export function SettingsPage() {
-  const { state, mode, updateCompany, refresh, notify } = useTaw();
+  const { state, mode, updateCompany, mutate, refresh, notify } = useTaw();
   const config = getCloudConfig();
   const [waha, setWaha] = useState<WahaConfig>(getWahaConfig());
   const [email, setEmail] = useState("");
   const [company, setCompany] = useState({ ...state.company });
+  const [rates, setRates] = useState(() => {
+    const current = ratesForCompany(state.company);
+    return { baseFee: current.baseFee, perKmRate: current.perKmRate };
+  });
 
   useEffect(() => {
     void currentSession().then((session) => setEmail(session?.user.email ?? ""));
@@ -19,6 +24,8 @@ export function SettingsPage() {
 
   useEffect(() => {
     setCompany({ ...state.company });
+    const current = ratesForCompany(state.company);
+    setRates({ baseFee: current.baseFee, perKmRate: current.perKmRate });
   }, [state.company]);
 
   return (
@@ -39,6 +46,31 @@ export function SettingsPage() {
           <Field label="Google Drive root folder ID" full><input className="input" value={company.driveRootFolderId} onChange={(e) => setCompany({ ...company, driveRootFolderId: e.target.value })} /></Field>
         </div>
         <button className="btn btn-brand btn-block btn-sm" style={{ marginTop: 12 }} onClick={() => updateCompany(company)}><Save size={13} /> Save company profile</button>
+      </Card>
+
+      <Card title="Pricing rates" subtitle="Owner-controlled base fee and per-kilometre rate for new dispatch quotes">
+        <div className="form-grid">
+          <Field label="Base fee (LKR)" hint="Applied once before distance, weight and road factors.">
+            <input className="input" type="number" min="0" step="100" value={rates.baseFee} onChange={(e) => setRates({ ...rates, baseFee: num(e.target.value) })} />
+          </Field>
+          <Field label="Rate per km (LKR)" hint="Multiplied by the estimated trip distance.">
+            <input className="input" type="number" min="0" step="10" value={rates.perKmRate} onChange={(e) => setRates({ ...rates, perKmRate: num(e.target.value) })} />
+          </Field>
+        </div>
+        <div className="alert-strip alert-info" style={{ marginTop: 12 }}>
+          Quote formula: (base fee + km × rate per km) × weight tier × road factor + tolls. Saving new rates affects future quotes only; existing trips and invoices stay unchanged.
+        </div>
+        <button
+          className="btn btn-brand btn-block btn-sm"
+          style={{ marginTop: 12 }}
+          disabled={rates.baseFee < 0 || rates.perKmRate < 0}
+          onClick={() => mutate((d) => {
+            d.company.baseFee = rates.baseFee;
+            d.company.perKmRate = rates.perKmRate;
+          }, { tone: "ok", text: "Pricing rates saved." })}
+        >
+          <Save size={13} /> Save pricing rates
+        </button>
       </Card>
 
       <Card title="Workspace connection" subtitle={email ? `Signed in as ${email}` : mode === "demo" ? "Local demo — no server connection" : "No active session"}>

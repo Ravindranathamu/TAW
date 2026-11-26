@@ -17,7 +17,7 @@ import {
 import { useTaw } from "../state/TawStore";
 import { AlertStrip, Badge, Card, Field, KeyValue, Modal, PageHead } from "../components/ui";
 import { LocationPicker } from "../components/LocationPicker";
-import { calculateQuote, estimateRoute, ROAD_FACTORS, WEIGHT_TIERS, weightTierFor } from "../lib/pricing";
+import { calculateQuote, estimateRoute, ratesForCompany, ROAD_FACTORS, WEIGHT_TIERS, weightTierFor } from "../lib/pricing";
 import { eligibleDrivers, helpers, matchCarriers } from "../lib/matching";
 import { money, uid, daysUntil } from "../lib/utils";
 import { quoteMessage, whatsappLink } from "../lib/invoice";
@@ -100,6 +100,7 @@ export function DispatchPage() {
     roadFactor,
     highwayTolls,
     discount,
+    rates: ratesForCompany(state.company),
   });
   const matches = useMemo(
     () => matchCarriers(state.vehicles, { customerVehicle: {

@@ -35,7 +35,7 @@ For cloud mode, the deployment pipeline injects `VITE_SUPABASE_URL`, `VITE_SUPAB
 - **Customer view:** public `/track/:token` link with no login, live map, status timeline, driver contact, ETA and QR code. It polls automatically for new positions.
 - **WAHA WhatsApp:** send quotes, dispatch notices and live locations through WAHA; import a customer's WhatsApp location pin from a webhook payload or share link.
 - **Fallback dispatch:** if no carrier fits, the order is passed to an active TAW partner with the app installed and the commission is retained. Trips are marked `SUBCONTRACTED`.
-- **Pricing:** `(base + distance × km rate) × weight tier × road factor + highway tolls`, with discount and pass-through toll handling.
+- **Pricing:** `(base + distance × km rate) × weight tier × road factor + highway tolls`, with discount and pass-through toll handling. The owner can change the base fee and per-km rate in **Settings → Pricing rates**; new quotes use the saved values.
 - **Compliance alerts:** 30/14/3-day lead times for insurance, revenue licence, fitness, emissions, finance, service intervals, tyres, battery warranty, driving licences and court dates.
 - **IRD invoices:** `YYMMM_QQQQ_XXXXX` serials, 18% VAT on service charges, non-VAT toll pass-through, PDF via jsPDF, duplicates and WhatsApp delivery.
 - **Partner sync:** TAW-to-TAW handover, external carriers, subcontracting, commission, margin and settlement tracking.
@@ -56,6 +56,7 @@ The native wrapper must be generated and installed on the driver's phone for tru
 ```text
 supabase/
   migrations/20261124000100_taw_schema.sql
+  migrations/20261126000300_taw_pricing_rates.sql
   seed_vehicles_sl.sql
   golden-master/
     manifest.sql
@@ -70,9 +71,10 @@ AGENTS.md
 Apply order on a fresh Supabase project:
 
 1. `supabase/migrations/20261124000100_taw_schema.sql`
-2. `supabase/seed_vehicles_sl.sql` (43 Sri Lankan vehicle models)
-3. `supabase/golden-master/manifest.sql`
-4. `supabase/golden-master/verify.sql` — must report **zero client data**
+2. `supabase/migrations/20261126000300_taw_pricing_rates.sql`
+3. `supabase/seed_vehicles_sl.sql` (43 Sri Lankan vehicle models)
+4. `supabase/golden-master/manifest.sql`
+5. `supabase/golden-master/verify.sql` — must report **zero client data**
 
 See [docs/GOLDEN_MASTER.md](docs/GOLDEN_MASTER.md) for the full procedure and update rules.
 

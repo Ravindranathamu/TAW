@@ -1,4 +1,4 @@
-import type { MapPoint, PriceBreakdown, RoadFactor, Trip, WeightTier } from "../types";
+import type { Company, MapPoint, PriceBreakdown, RoadFactor, Trip, WeightTier } from "../types";
 import { sum } from "./utils";
 
 export const WEIGHT_TIERS: Record<WeightTier, { label: string; factor: number; maxKg: number }> = {
@@ -21,12 +21,30 @@ export const weightTierFor = (weightKg: number): WeightTier => {
   return "HEAVY";
 };
 
-export const DEFAULT_RATES = {
+export interface PricingRates {
+  baseFee: number;
+  perKmRate: number;
+  recoveryFee: number;
+  offroadRecoveryFee: number;
+}
+
+export const DEFAULT_RATES: PricingRates = {
   baseFee: 3500,
   perKmRate: 180,
   recoveryFee: 8500,
   offroadRecoveryFee: 12500,
 };
+
+/** Owner-editable rates with safe defaults for older saved workspaces. */
+export function ratesForCompany(company?: Partial<Company>): PricingRates {
+  const baseFee = Number(company?.baseFee);
+  const perKmRate = Number(company?.perKmRate);
+  return {
+    ...DEFAULT_RATES,
+    baseFee: Number.isFinite(baseFee) && baseFee >= 0 ? baseFee : DEFAULT_RATES.baseFee,
+    perKmRate: Number.isFinite(perKmRate) && perKmRate >= 0 ? perKmRate : DEFAULT_RATES.perKmRate,
+  };
+}
 
 export interface QuoteInput {
   distanceKm: number;
@@ -35,7 +53,7 @@ export interface QuoteInput {
   highwayTolls: number;
   finalQuote?: number;
   discount?: number;
-  rates?: typeof DEFAULT_RATES;
+  rates?: PricingRates;
 }
 
 /**

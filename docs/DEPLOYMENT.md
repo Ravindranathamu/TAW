@@ -50,11 +50,14 @@ These values are applied by the initial deployment and are build-time only. The 
 Apply, in order:
 
 1. `supabase/migrations/20261124000100_taw_schema.sql`
-2. `supabase/seed_vehicles_sl.sql`
-3. `supabase/golden-master/manifest.sql`
-4. `supabase/golden-master/verify.sql`
+2. `supabase/migrations/20261126000300_taw_pricing_rates.sql`
+3. `supabase/seed_vehicles_sl.sql`
+4. `supabase/golden-master/manifest.sql`
+5. `supabase/golden-master/verify.sql`
 
 Then set each company user's `app_metadata.company_id`. Admin users need `app_metadata.role = "ravsoft_admin"`.
+
+Owners change the base fee and per-km rate in **Settings → Pricing rates**. Values are saved per company through `taw_save_pricing_rates()` and applied to every new dispatch quote; existing trips and invoices are not recalculated.
 
 ## Licence verification
 

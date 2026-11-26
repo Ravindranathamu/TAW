@@ -1,5 +1,6 @@
 import { createClient, type Session, type SupabaseClient } from "@supabase/supabase-js";
 import type { Company, Staff, TawState, Trip, Vehicle } from "../types";
+import { ratesForCompany } from "./pricing";
 
 export interface CloudConfig {
   url: string;
@@ -75,6 +76,24 @@ export async function pullCloud(): Promise<TawState> {
   if (installationId && !state.company?.installationId) {
     state.company.installationId = installationId;
   }
+  // Pricing rates live in their own additive migration, so older installations
+  // simply keep the built-in defaults until that migration is applied.
+  let remote: { baseFee?: number; perKmRate?: number } = {};
+  try {
+    const { data: pricing } = await sb.rpc("taw_get_pricing_rates");
+    if (pricing && typeof pricing === "object") {
+      remote = pricing as { baseFee?: number; perKmRate?: number };
+    }
+  } catch {
+    /* pricing RPC not installed yet */
+  }
+  const rates = ratesForCompany({
+    ...state.company,
+    baseFee: Number.isFinite(Number(remote.baseFee)) ? Number(remote.baseFee) : undefined,
+    perKmRate: Number.isFinite(Number(remote.perKmRate)) ? Number(remote.perKmRate) : undefined,
+  });
+  state.company.baseFee = rates.baseFee;
+  state.company.perKmRate = rates.perKmRate;
   return state;
 }
 
@@ -84,6 +103,18 @@ export async function pushCloud(state: TawState): Promise<void> {
   if (!sb) throw new Error("Master project is not configured.");
   const { error } = await sb.rpc("taw_save_workspace", { p_state: state });
   if (error) throw new Error(error.message);
+  // Additive RPC keeps owner-editable rates even though the whole-workspace RPC
+  // predates those columns. Older installations simply ignore this call.
+  const rates = ratesForCompany(state.company);
+  try {
+    const { error: rateError } = await sb.rpc("taw_save_pricing_rates", {
+      p_base_fee: rates.baseFee,
+      p_per_km_rate: rates.perKmRate,
+    });
+    if (rateError) throw rateError;
+  } catch {
+    /* pricing RPC not installed yet */
+  }
 }
 
 /** Public customer-tracking payload, returned by the anon-callable TAW RPC. */
